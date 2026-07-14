@@ -117,3 +117,7 @@ async def ambil_soal_baru(jumlah_pilihan: int = 4):
         "soal_deskripsi": deskripsi_terpilih,
         "opsi_gambar": [{"id": h["id"], "nama": h["nama"]} for h in pilihan_jawaban]
     }
+
+# Tambahkan baris ini di paling bawah file api/index.py Anda:
+app = app
+handler = app
