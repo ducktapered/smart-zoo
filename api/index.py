@@ -4,18 +4,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import random
 import os
-from pathlib import Path
 
 app = FastAPI()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Jalur absolut internal folder api/ untuk Vercel
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
-static_path = str(BASE_DIR / "static")
-templates_path = str(BASE_DIR / "templates")
+# Karena static di-handle langsung oleh vercel.json, di backend kita cukup arahkan path-nya
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(current_dir), "static")), name="static")
 
-# Pasang folder static dan templates
-app.mount("/static", StaticFiles(directory=static_path), name="static")
-templates = Jinja2Templates(directory=templates_path)
+# Templates sekarang aman karena berada di dalam folder api/ yang sama
+templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
 # DATABASE 30 HEWAN (Dipersempit 5 contoh untuk efisiensi kode, kamu bisa teruskan hingga 30)
 database_hewan = [
@@ -91,36 +90,27 @@ database_hewan = [
     # ... Tambahkan 25 hewan lainnya dengan pola yang sama di sini
 ]
 
-# Rute 1: Menampilkan halaman utama web saat diakses
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Rute 2: API Python untuk mengacak dan membuat soal baru
 @app.get("/api/baru")
 async def ambil_soal_baru(jumlah_pilihan: int = 4):
-    # 1. Pilih hewan jawaban benar
     hewan_benar = random.choice(database_hewan)
     deskripsi_terpilih = random.choice(hewan_benar["deskripsi"])
     
-    # 2. Buat daftar pilihan jawaban
     pilihan_jawaban = [hewan_benar]
     sisa_hewan = [h for h in database_hewan if h["id"] != hewan_benar["id"]]
     
-    # Ambil opsi salah secara acak sesuai request (2-4 pilihan)
     opsi_salah = random.sample(sisa_hewan, min(jumlah_pilihan - 1, len(sisa_hewan)))
     pilihan_jawaban.extend(opsi_salah)
-    
-    # Acak posisi jawaban agar tidak ketahuan
     random.shuffle(pilihan_jawaban)
     
-    # Kirim data ke frontend berupa JSON
     return {
         "hewan_id_benar": hewan_benar["id"],
         "soal_deskripsi": deskripsi_terpilih,
         "opsi_gambar": [{"id": h["id"], "nama": h["nama"]} for h in pilihan_jawaban]
     }
 
-# Tambahkan baris ini di paling bawah file api/index.py Anda:
-app = app
+# Baris wajib ekspor objek untuk Vercel Serverless
 handler = app
