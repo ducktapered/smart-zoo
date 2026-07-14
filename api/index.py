@@ -4,15 +4,18 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import random
 import os
+from pathlib import Path
 
 app = FastAPI()
 
-# Hubungkan folder static dan templates agar bisa dibaca oleh Python
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(current_dir)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-app.mount("/static", StaticFiles(directory=os.path.join(project_dir, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(project_dir, "templates"))
+static_path = str(BASE_DIR / "static")
+templates_path = str(BASE_DIR / "templates")
+
+# Pasang folder static dan templates
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+templates = Jinja2Templates(directory=templates_path)
 
 # DATABASE 30 HEWAN (Dipersempit 5 contoh untuk efisiensi kode, kamu bisa teruskan hingga 30)
 database_hewan = [
